@@ -166,6 +166,25 @@ apt-get -yq install libnss3-dev libnspr4-dev pkg-config \
   libcurl4-nss-dev flex bison gcc make libnss3-tools \
   libevent-dev ppp xl2tpd || exiterr2
 
+case "$(uname -r)" in
+  4.14*|4.15*)
+    L2TP_VER=1.3.12
+    l2tp_file="xl2tpd-$L2TP_VER.tar.gz"
+    l2tp_url1="https://github.com/xelerance/xl2tpd/archive/v$L2TP_VER.tar.gz"
+    l2tp_url2="https://mirrors.kernel.org/ubuntu/pool/universe/x/xl2tpd/xl2tpd_$L2TP_VER.orig.tar.gz"
+    apt-get -yq install libpcap0.8-dev || exiterr2
+    if ! { wget -t 3 -T 30 -nv -O "$l2tp_file" "$l2tp_url1" || wget -t 3 -T 30 -nv -O "$l2tp_file" "$l2tp_url2"; }; then
+      exiterr "Cannot download xl2tpd source."
+    fi
+    /bin/rm -rf "/opt/src/xl2tpd-$L2TP_VER"
+    tar xzf "$l2tp_file" && /bin/rm -f "$l2tp_file"
+    cd "xl2tpd-$L2TP_VER" || exiterr "Cannot enter xl2tpd source dir."
+    make -s 2>/dev/null && PREFIX=/usr make -s install
+    cd /opt/src || exiterr "Cannot enter /opt/src."
+    /bin/rm -rf "/opt/src/xl2tpd-$L2TP_VER"
+    ;;
+esac
+
 bigecho "Installing Fail2Ban to protect SSH..."
 
 apt-get -yq install fail2ban || exiterr2
